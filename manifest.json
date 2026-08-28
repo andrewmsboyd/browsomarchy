@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.andrewmsboyd.browsomarchy",
+  "name": "Browsomarchy",
+  "version": "1.1.0",
+  "license": "MIT",
+  "author": "andrewmsboyd",
+  "description": "Pick which browser opens a link, right from the bar dropdown",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Browsomarchy",
+    "description": "Choose a browser whenever a link is opened",
+    "category": "Network",
+    "allowMultiple": false
+  }
+}
