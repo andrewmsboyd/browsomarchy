@@ -36,7 +36,7 @@ Item {
 
   readonly property var visibleIds: Model.visibleOrderedIds(root.scannedIds, root.hiddenBrowsers, root.order)
   readonly property var visibleBrowsers: root.visibleIds.map(root.browserInfo)
-  readonly property var shortcuts: Model.assignShortcuts(root.visibleIds)
+  readonly property var shortcuts: Model.assignShortcuts(root.visibleBrowsers)
   readonly property bool isDefault: root.defaultBrowserId === root.desktopId
 
   // cfg's arrays cross from the BarWidget's QML context into this Service's

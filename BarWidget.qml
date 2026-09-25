@@ -192,13 +192,18 @@ BarWidget {
         if (root.activeUrl === "") return
 
         var list = root.service ? root.service.visibleBrowsers : []
-        if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
-          var idx = event.key - Qt.Key_1
-          if (idx < list.length) {
-            root.pick(idx, (event.modifiers & Qt.ShiftModifier) !== 0)
-            event.accepted = true
+        var pressed = String(event.text || "").toLowerCase()
+        if (pressed.length === 1 && root.service) {
+          var shortcuts = root.service.shortcuts
+          for (var i = 0; i < list.length; i++) {
+            if (shortcuts[list[i].id] === pressed) {
+              root.pick(i, (event.modifiers & Qt.ShiftModifier) !== 0)
+              event.accepted = true
+              return
+            }
           }
-        } else if (event.key === Qt.Key_Down) {
+        }
+        if (event.key === Qt.Key_Down) {
           root.selectedIndex = Math.min(list.length - 1, root.selectedIndex + 1)
           event.accepted = true
         } else if (event.key === Qt.Key_Up) {
@@ -280,7 +285,7 @@ BarWidget {
                     readonly property string shortcut: root.service ? (root.service.shortcuts[pickRow.modelData.id] || "") : ""
                     visible: shortcut !== ""
                     anchors.verticalCenter: parent.verticalCenter
-                    text: shortcut
+                    text: shortcut.toUpperCase()
                     color: pickRow.index === root.selectedIndex ? Color.menu.selectedText : root.bar.foreground
                     opacity: 0.55
                     font.family: root.bar.fontFamily
@@ -311,7 +316,7 @@ BarWidget {
 
             Text {
               width: parent.width
-              text: "1–9 to pick · Enter to open · Shift+Enter incognito"
+              text: "Letter to pick · Enter to open · Shift+Enter incognito"
               color: root.bar.foreground
               opacity: 0.45
               font.family: root.bar.fontFamily
@@ -492,7 +497,7 @@ BarWidget {
               spacing: Style.space(8)
 
               Text {
-                width: parent.width - makeDefaultBtn.width
+                width: parent.width - makeDefaultBtn.width - parent.spacing
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.service && root.service.isDefault
                   ? "Browsomarchy is your default browser"

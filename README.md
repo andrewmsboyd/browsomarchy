@@ -8,9 +8,10 @@ pops the same bar dropdown you'd get from clicking the icon, on whichever
 monitor has focus.
 
 - **Picker** — links open a dropdown listing every detected browser. Click
-  one, or use the keyboard: digits `1`-`9` pick instantly, arrow keys move
-  the selection, `Enter` opens it, `Shift+Enter` opens it in a private
-  window.
+  one, or use the keyboard: each browser's first letter (e.g. `v` for
+  Vivaldi, falling back to a later letter or a digit on collision) picks it
+  instantly, arrow keys move the selection, `Enter` opens it, `Shift+Enter`
+  opens it in a private window.
 - **Rules** — regex → browser rules bypass the picker entirely for URLs you
   always want in a specific browser (e.g. `github\.com` → a work profile).
 - **Hide / reorder** — tuck away a browser you never want to pick, or change

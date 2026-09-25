@@ -79,11 +79,41 @@ function matchRule(url, rules) {
   return ""
 }
 
-// Digit shortcuts for the first nine visible rows: {"brave.desktop": "1", ...}
-function assignShortcuts(visibleIds) {
+// Letters (a-z) found in a browser's name, in order, for shortcut assignment.
+function shortcutCandidates(name) {
+  var out = []
+  var text = String(name || "")
+  for (var i = 0; i < text.length; i++) {
+    var ch = text.charAt(i).toLowerCase()
+    if (ch >= "a" && ch <= "z") out.push(ch)
+  }
+  return out
+}
+
+// One-key shortcuts for each visible browser: the first letter of its name
+// normally ("v" for Vivaldi), falling back to a later letter in the name on
+// collision (e.g. two browsers starting with the same letter), and finally
+// to a digit 1-9 if every letter in the name is already taken.
+function assignShortcuts(visibleBrowsers) {
   var map = {}
-  for (var i = 0; i < visibleIds.length && i < 9; i++) {
-    map[visibleIds[i]] = String(i + 1)
+  var used = {}
+  var list = visibleBrowsers || []
+  for (var i = 0; i < list.length; i++) {
+    var browser = list[i]
+    var candidates = shortcutCandidates(browser.name || browser.id)
+    var assigned = ""
+    for (var c = 0; c < candidates.length; c++) {
+      if (!used[candidates[c]]) { assigned = candidates[c]; break }
+    }
+    if (!assigned) {
+      for (var d = 1; d <= 9; d++) {
+        if (!used[String(d)]) { assigned = String(d); break }
+      }
+    }
+    if (assigned) {
+      map[browser.id] = assigned
+      used[assigned] = true
+    }
   }
   return map
 }
@@ -131,6 +161,7 @@ if (typeof module !== "undefined") {
     parseScanOutput: parseScanOutput,
     visibleOrderedIds: visibleOrderedIds,
     matchRule: matchRule,
+    shortcutCandidates: shortcutCandidates,
     assignShortcuts: assignShortcuts,
     normalizeRules: normalizeRules,
     colorLuminance: colorLuminance,
