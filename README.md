@@ -92,9 +92,13 @@ no separate config file.
   heuristic already in `/usr/share/omarchy/bin/omarchy-launch-browser`.
   Either path finishes with `omarchy-hyprland-focus-app` so a reused browser
   window on another workspace gets brought to you instead of left behind.
-- "Make default" runs `xdg-mime default`, `xdg-settings set
-  default-web-browser`, and `update-desktop-database` — standard XDG
-  mechanisms, the same ones that plain browser installs use.
+- "Make default" runs the bundled `set-default.sh`: `xdg-mime default`,
+  `xdg-settings set default-web-browser`, and `update-desktop-database` —
+  standard XDG mechanisms, the same ones that plain browser installs use.
+  It also sets http/https in the current desktop's own list
+  (`~/.config/hyprland-mimeapps.list`) if one exists. That list is read
+  before `mimeapps.list`, and Omarchy 4.0.6+ ships one that routes links
+  through `omarchy-launch-browser`, which can't call Browsomarchy.
 - The registered `.desktop` file
   (`~/.local/share/applications/io.github.andrewmsboyd.browsomarchy.desktop`)
   is (re)written on every shell start so it stays in sync with this plugin's
@@ -129,6 +133,8 @@ omarchy plugin remove io.github.andrewmsboyd.browsomarchy
 If Browsomarchy is currently your default browser, pick another one first
 (`xdg-settings set default-web-browser <id>.desktop`, or reinstall a browser
 normally) — removing the plugin does not un-register it as the handler.
+On Omarchy 4.0.6+, also set `x-scheme-handler/http` and `/https` in
+`~/.config/hyprland-mimeapps.list` back to `omarchy-browser.desktop`.
 
 ## Attribution
 

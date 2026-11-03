@@ -153,17 +153,10 @@ Item {
 
   // Explicit action (mirrors Browserino's — the macOS app this is inspired
   // by — own "Make default" button) —
-  // never run automatically on install.
+  // never run automatically on install. set-default.sh also covers the
+  // desktop-specific mimeapps list Omarchy 4.0.6+ routes links through.
   function makeDefault() {
-    var appsDir = Quickshell.env("HOME") + "/.local/share/applications"
-    var cmd = [
-      "xdg-mime default " + Util.shellQuote(root.desktopId)
-        + " x-scheme-handler/http x-scheme-handler/https text/html"
-        + " x-scheme-handler/about x-scheme-handler/unknown",
-      "xdg-settings set default-web-browser " + Util.shellQuote(root.desktopId),
-      "update-desktop-database " + Util.shellQuote(appsDir)
-    ].join(" && ")
-    Util.execDetached(cmd)
+    Quickshell.execDetached([root.pluginDir + "/set-default.sh", root.desktopId])
     defaultCheckTimer.restart()
   }
 
@@ -198,7 +191,7 @@ Item {
     }
   }
 
-  // Gives xdg-mime/xdg-settings a moment to land before re-reading.
+  // Gives set-default.sh a moment to land before re-reading.
   Timer {
     id: defaultCheckTimer
     interval: 1500
