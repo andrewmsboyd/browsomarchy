@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Launches a URL in a specific browser, chosen by desktop-entry id.
+# Launches a specific browser, chosen by desktop-entry id, with a URL or, if
+# the URL is empty, with a new window.
 #
 # Usage: launch.sh <desktop-id> <url> [--incognito]
 #
@@ -23,7 +24,7 @@ desktop_id="$1"
 url="$2"
 mode="${3:-}"
 
-if [[ -z $desktop_id || -z $url ]]; then
+if [[ -z $desktop_id ]]; then
   echo "usage: launch.sh <desktop-id> <url> [--incognito]" >&2
   exit 1
 fi
@@ -37,8 +38,12 @@ focus_app() {
   omarchy-hyprland-focus-app "^${desktop_id%.desktop}$" >/dev/null 2>&1 || true
 }
 
+# Dropped entirely when empty: an empty argument would reach the browser.
+url_args=()
+[[ -n $url ]] && url_args=("$url")
+
 if [[ $mode != "--incognito" ]]; then
-  uwsm-app -- gtk-launch "$desktop_id" "$url"
+  uwsm-app -- gtk-launch "$desktop_id" "${url_args[@]}"
   focus_app
   exit 0
 fi
@@ -46,7 +51,7 @@ fi
 browser_exec=$(sed -n 's/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr}/share/applications/"$desktop_id" 2>/dev/null | head -1)
 
 if [[ -z $browser_exec ]]; then
-  uwsm-app -- gtk-launch "$desktop_id" "$url"
+  uwsm-app -- gtk-launch "$desktop_id" "${url_args[@]}"
   focus_app
   exit 0
 fi
@@ -59,5 +64,5 @@ else
   private_flag="--incognito"
 fi
 
-uwsm-app -- "$browser_exec" "$private_flag" --new-window "$url"
+uwsm-app -- "$browser_exec" "$private_flag" --new-window "${url_args[@]}"
 focus_app

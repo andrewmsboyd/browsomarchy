@@ -7,8 +7,8 @@ deliberate difference: opening a link doesn't spawn a separate window. It
 pops the same bar dropdown you'd get from clicking the icon, on whichever
 monitor has focus.
 
-- **Picker** — links open a dropdown listing every detected browser. Click
-  one, or use the keyboard: each browser's first letter (e.g. `v` for
+- **Picker** — anything that opens a browser, with or without a link, gets a
+  dropdown listing every detected browser. Click one, or use the keyboard: each browser's first letter (e.g. `v` for
   Vivaldi, falling back to a later letter or a digit on collision) picks it
   instantly, arrow keys move the selection, `Enter` opens it, `Shift+Enter`
   opens it in a private window.
@@ -43,9 +43,11 @@ Click the browser icon in the bar to open the dropdown:
 
 - With no link pending, it shows the management section directly: browsers
   (hide/reorder), rules, and the "Make default" status/button.
-- When a link is opened anywhere on the system (a browser dropdown pending),
-  the same dropdown instead shows the picker for that link, with the
-  management section tucked under a "Show" toggle underneath.
+- When something opens a browser anywhere on the system (a link, a browser
+  keybinding, or a command using `$BROWSER`), the same dropdown instead shows
+  the picker, with the management section tucked under a "Show" toggle
+  underneath. With no link it opens a new window in the browser you pick, and
+  a private launch stays private whichever browser you pick.
 - The picker reliably grabs keyboard focus the instant it opens — even
   though it's triggered from outside the shell (an `xdg-open` call, not a
   click on the bar icon) — so `1`-`9` and arrow keys work immediately with
@@ -55,7 +57,8 @@ Click the browser icon in the bar to open the dropdown:
 
 ```
 omarchy-shell browsomarchy status        # {"browsers":[...],"defaultBrowser":"...","isDefault":true}
-omarchy-shell browsomarchy open <url>     # what the registered .desktop entry calls
+omarchy-shell browsomarchy open <url>     # show the picker for a link
+omarchy-shell browsomarchy choose <url> <true|false>  # what the registered .desktop entry calls; url may be empty, true means private
 omarchy-shell browsomarchy rescan         # re-scan installed browsers
 omarchy-shell browsomarchy makeDefault    # register as the system default browser
 ```

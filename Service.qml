@@ -31,7 +31,7 @@ Item {
 
   // ---- State ----
   property var scannedIds: []       // every installed browser, as detected
-  property string pendingUrl: ""    // handed to whichever BarWidget.open() runs next
+  property var pendingRequest: null // { url, incognito }, handed to whichever BarWidget.open() runs next
   property string defaultBrowserId: ""
 
   readonly property var visibleIds: Model.visibleOrderedIds(root.scannedIds, root.hiddenBrowsers, root.order)
@@ -78,34 +78,34 @@ Item {
   }
 
   // Consumed exactly once by whichever BarWidget instance's open() the
-  // shell.summon() call landed on.
-  function takePendingUrl() {
-    var url = root.pendingUrl
-    root.pendingUrl = ""
-    return url
+  // shell.summon() call landed on. Null means a plain click on the bar icon.
+  function takePendingRequest() {
+    var request = root.pendingRequest
+    root.pendingRequest = null
+    return request
   }
 
   function launch(desktopId, url, incognito) {
-    var args = [root.pluginDir + "/launch.sh", desktopId, url]
+    var args = [root.pluginDir + "/launch.sh", desktopId, url || ""]
     if (incognito) args.push("--incognito")
     Quickshell.execDetached(args)
   }
 
-  // The IPC entry point our registered .desktop file's Exec= line calls
-  // into (`omarchy-shell browsomarchy open %u`). Rule match → launch directly,
-  // no UI. Otherwise stash the URL and summon the bar popup exactly like a
-  // hotkey would (Bar.qml's findPanelWidget picks the focused monitor).
-  function openUrl(url) {
+  // The IPC entry point open.sh, our .desktop file's Exec= command, calls
+  // into. An empty url means the system asked for a browser with no link.
+  // Rule match → launch directly, no UI. Otherwise stash the request and
+  // summon the bar popup exactly like a hotkey would (Bar.qml's
+  // findPanelWidget picks the focused monitor).
+  function choose(url, incognito) {
     var trimmed = String(url || "").trim()
-    if (!trimmed) return "ignored: empty url"
 
-    var ruleMatch = Model.matchRule(trimmed, root.rules)
+    var ruleMatch = trimmed ? Model.matchRule(trimmed, root.rules) : ""
     if (ruleMatch) {
-      root.launch(ruleMatch, trimmed, false)
+      root.launch(ruleMatch, trimmed, incognito)
       return "rule:" + ruleMatch
     }
 
-    root.pendingUrl = trimmed
+    root.pendingRequest = { url: trimmed, incognito: incognito }
     var summoned = root.shell && typeof root.shell.summon === "function"
       && root.shell.summon(root.pluginId, "")
 
@@ -115,9 +115,9 @@ Item {
       // silently dropping the link, since this plugin may be the system's
       // registered default browser handler.
       var fallback = root.visibleBrowsers[0]
-      root.pendingUrl = ""
+      root.pendingRequest = null
       if (fallback) {
-        root.launch(fallback.id, trimmed, false)
+        root.launch(fallback.id, trimmed, incognito)
         return "fallback:" + fallback.id
       }
       return "no picker available"
@@ -131,7 +131,7 @@ Item {
       "Type=Application",
       "Name=Browsomarchy",
       "Comment=Choose a browser for this link",
-      "Exec=omarchy-shell browsomarchy open %u",
+      "Exec=" + root.pluginDir + "/open.sh %u",
       "Icon=web-browser",
       "Terminal=false",
       "NoDisplay=true",
@@ -207,7 +207,8 @@ Item {
   IpcHandler {
     target: "browsomarchy"
 
-    function open(url: string): string { return root.openUrl(url) }
+    function open(url: string): string { return root.choose(url, false) }
+    function choose(url: string, incognito: bool): string { return root.choose(url, incognito) }
     function rescan(): string { root.rescan(); return "ok" }
     function makeDefault(): string { root.makeDefault(); return "ok" }
 

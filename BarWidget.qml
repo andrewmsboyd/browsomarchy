@@ -7,9 +7,9 @@ import "Model.js" as Model
 
 // Bar icon + dropdown for the Browsomarchy plugin. Doubles as two different
 // views of the same popup:
-//   - Summoned with a pending URL (Service.openUrl() -> shell.summon()):
-//     shows the browser picker for that link.
-//   - Clicked manually with no pending URL: shows the management section
+//   - Summoned by a browser launch (Service.choose() -> shell.summon()):
+//     shows the browser picker, for a link or for a new window.
+//   - Clicked manually on the bar icon: shows the management section
 //     (hide/reorder browsers, rules, "make default") directly, since
 //     there's nothing to pick a browser *for*.
 // Implements the open()/close()/opened contract findPanelWidget() (Bar.qml)
@@ -23,16 +23,20 @@ BarWidget {
 
   property bool popupOpen: false
   readonly property bool opened: popupOpen
+  property bool picking: false
   property string activeUrl: ""
+  property bool activeIncognito: false
   property int selectedIndex: 0
   property bool manageOpen: false
   property string newRuleBrowser: ""
 
   function open() {
-    var url = root.service ? root.service.takePendingUrl() : ""
-    root.activeUrl = url
+    var request = root.service ? root.service.takePendingRequest() : null
+    root.picking = request !== null
+    root.activeUrl = request ? request.url : ""
+    root.activeIncognito = request ? request.incognito : false
     root.selectedIndex = 0
-    root.manageOpen = url === ""
+    root.manageOpen = !root.picking
     root.popupOpen = true
     Qt.callLater(function() { keyCatcher.forceActiveFocus() })
   }
@@ -96,7 +100,7 @@ BarWidget {
     if (!root.service) return
     var list = root.service.visibleBrowsers
     if (index < 0 || index >= list.length) return
-    root.service.launch(list[index].id, root.activeUrl, incognito)
+    root.service.launch(list[index].id, root.activeUrl, incognito || root.activeIncognito)
     root.close()
   }
 
@@ -189,7 +193,7 @@ BarWidget {
           event.accepted = true
           return
         }
-        if (root.activeUrl === "") return
+        if (!root.picking) return
 
         var list = root.service ? root.service.visibleBrowsers : []
         var pressed = String(event.text || "").toLowerCase()
@@ -227,15 +231,15 @@ BarWidget {
           width: parent.width
           spacing: Style.space(10)
 
-          // ---- Picker: only rendered when opened for an actual link ----
+          // ---- Picker: only rendered when opened by a browser launch ----
           Column {
             width: parent.width
             spacing: Style.space(4)
-            visible: root.activeUrl !== ""
+            visible: root.picking
 
             Text {
               width: parent.width
-              text: root.activeUrl
+              text: (root.activeUrl || "New window") + (root.activeIncognito ? " (private)" : "")
               color: root.bar.foreground
               opacity: 0.7
               font.family: root.bar.fontFamily
@@ -325,12 +329,12 @@ BarWidget {
             }
           }
 
-          PanelSeparator { visible: root.activeUrl !== ""; foreground: root.bar.foreground }
+          PanelSeparator { visible: root.picking; foreground: root.bar.foreground }
 
           // ---- Manage: browsers, rules, default-browser status ----
           Row {
             width: parent.width
-            visible: root.activeUrl !== ""
+            visible: root.picking
 
             Text {
               width: parent.width - toggleManageBtn.width
